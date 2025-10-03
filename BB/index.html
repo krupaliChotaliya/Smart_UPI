@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart UPI Escrow Payment</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Chakra+Petch:wght@700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary-orange: #ff8c00;
+        --primary-pink: #ff0080;
+        --accent-yellow: #fbc531;
+        --background-dark: #1f1d2b;
+        --card-dark: #252836;
+        --header-dark: #1f1d2b;
+        --border-color: rgba(255, 255, 255, 0.1);
+        --text-primary: #ffffff;
+        --text-secondary: #9a9a9a;
+        --success-color: #2ecc71;
+        --warning-color: #f1c40f;
+        --danger-color: #e74c3c;
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        --border-radius: 16px;
+      }
+
+      body {
+        font-family: "Poppins", sans-serif;
+        background-color: var(--background-dark);
+        color: var(--text-primary);
+        margin: 0;
+        min-height: 100vh;
+      }
+      
+      /* --- Header Styles --- */
+      .header {
+        background-color: var(--header-dark);
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+      .header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--primary-pink), var(--accent-yellow));
+        opacity: 0.5;
+        box-shadow: 0 0 10px var(--primary-pink);
+      }
+      
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      
+      .brand-logo {
+        width: 40px;
+        height: 40px;
+      }
+      
+      .brand-name {
+        font-family: 'Chakra Petch', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 700;
+        background: linear-gradient(
+          45deg,
+          var(--accent-yellow),
+          var(--primary-orange)
+        );
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        -webkit-text-fill-color: transparent;
+      }
+      
+      #connectWalletBtn {
+        background: linear-gradient(to right, var(--primary-orange), var(--primary-pink));
+        border: none;
+        color: var(--text-primary);
+        padding: 0.6rem 1.2rem;
+        border-radius: 50px; /* Cylinder shape */
+        font-family: "Poppins", sans-serif;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 0 10px rgba(255, 0, 128, 0.3);
+      }
+
+      #connectWalletBtn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(255, 0, 128, 0.5);
+      }
+      
+      #connectWalletBtn .icon {
+        font-size: 1.2em;
+      }
+      
+      /* Main content container */
+      .main-content {
+        display: flex;
+        justify-content: center;
+        padding: 2rem;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 900px;
+        background-color: var(--card-dark);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        padding: 2.5rem;
+        box-sizing: border-box;
+      }
+
+      .icon {
+        display: inline-block;
+        width: 1em;
+        height: 1em;
+        stroke-width: 0;
+        stroke: currentColor;
+        fill: currentColor;
+        vertical-align: -0.15em;
+        margin-right: 0.5rem;
+      }
+
+      h1, h2 {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-top: 0;
+        color: var(--text-primary);
+      }
+
+      h2 {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        border-top: 1px solid var(--border-color);
+        padding-top: 2.5rem;
+        margin-top: 3rem;
+      }
+
+      #products {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+      }
+      
+      .product-card {
+        background-color: rgba(0,0,0,0.1);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        text-align: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        overflow: hidden;
+      }
+
+      .product-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 0 20px rgba(255, 140, 0, 0.3);
+        border-color: var(--primary-orange);
+      }
+      
+      .product-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        background: -webkit-linear-gradient(45deg, var(--primary-orange), var(--primary-pink));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .product-card h3 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.25rem;
+        color: var(--text-primary);
+      }
+
+      .product-card p {
+        margin: 0 0 1.5rem 0;
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+        font-weight: 600;
+      }
+      
+      button {
+        background: linear-gradient(
+          45deg,
+          var(--primary-orange),
+          var(--primary-pink)
+        );
+        color: #fff;
+        border: none;
+        padding: 0.8rem 1.5rem;
+        border-radius: 8px;
+        font-family: "Poppins", sans-serif;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(255, 0, 128, 0.2);
+        align-self: center;
+        width: 100%;
+      }
+
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 0, 128, 0.4);
+      }
+      
+      button:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 10px rgba(255, 0, 128, 0.3);
+      }
+      
+      .escrow-checker {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      input[type="number"] {
+        padding: 0.8rem;
+        background-color: var(--background-dark);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        border-radius: 8px;
+        font-family: "Poppins", sans-serif;
+        font-size: 1rem;
+        width: 100%;
+        max-width: 350px;
+        text-align: center;
+        box-sizing: border-box;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      }
+      input[type="number"]:focus {
+        outline: none;
+        border-color: var(--primary-orange);
+        box-shadow: 0 0 0 3px rgba(255, 140, 0, 0.3);
+      }
+
+      #escrowStatus {
+        margin-top: 1.5rem;
+        padding: 1.5rem;
+        background-color: rgba(0,0,0,0.2);
+        border-radius: var(--border-radius);
+        border: 1px solid var(--border-color);
+        text-align: left;
+        line-height: 1.8;
+        word-break: break-all;
+      }
+      
+      #escrowStatus p { margin: 0.5rem 0; }
+      
+      #escrowStatus .label {
+        font-weight: 600;
+        color: var(--text-secondary);
+        display: inline-block;
+        width: 100px;
+      }
+      #escrowStatus .value {
+        color: var(--text-primary);
+      }
+
+      #escrowStatus .status-tag {
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        color: #fff;
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+      
+      #escrowStatus .actions {
+        margin-top: 1rem;
+        display: flex;
+        gap: 0.5rem;
+      }
+      
+      #escrowStatus .actions button { width: auto; }
+      
+      .refund-btn {
+        background: linear-gradient(45deg, #ff7e5f, var(--danger-color));
+        box-shadow: 0 4px 6px rgba(220, 53, 69, 0.2);
+      }
+      .refund-btn:hover {
+        box-shadow: 0 6px 12px rgba(220, 53, 69, 0.3);
+      }
+      
+      /* --- Custom Alert Styles --- */
+      #customAlert {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+      }
+      #customAlert.show {
+        opacity: 1;
+        visibility: visible;
+      }
+      .alert-content {
+        background-color: var(--card-dark);
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow);
+        text-align: center;
+        max-width: 400px;
+        width: 90%;
+        position: relative;
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+      }
+      #customAlert.show .alert-content {
+        transform: scale(1);
+      }
+      .alert-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0 auto 1.5rem auto;
+        font-size: 2rem;
+      }
+      .alert-icon.success {
+        background-color: rgba(46, 204, 113, 0.1);
+        color: var(--success-color);
+      }
+      .alert-icon.error {
+        background-color: rgba(231, 76, 60, 0.1);
+        color: var(--danger-color);
+      }
+      .alert-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0 0 0.5rem 0;
+      }
+      .alert-message {
+        color: var(--text-secondary);
+        margin: 0 0 1.5rem 0;
+        line-height: 1.6;
+      }
+      .alert-close-btn {
+        width: 50%;
+        margin: 0 auto;
+      }
+    </style>
+  </head>
+  <body>
+
+    <header class="header">
+      <div class="brand">
+        <svg class="brand-logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="url(#logoGradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 12L22 7" stroke="url(#logoGradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 12V22" stroke="url(#logoGradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 12L2 7" stroke="url(#logoGradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <defs>
+                <linearGradient id="logoGradient" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#FF8C00"/>
+                    <stop offset="1" stop-color="#FF0080"/>
+                </linearGradient>
+            </defs>
+        </svg>
+        <span class="brand-name">SMART UPI</span>
+      </div>
+      <button id="connectWalletBtn">
+        <svg class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="M21 18V19C21 20.1 20.1 21 19 21H5C3.9 21 3 20.1 3 19V5C3 3.9 3.9 3 5 3H19C20.1 3 21 3.9 21 5V6H12C10.9 6 10 6.9 10 8V16C10 17.1 10.9 18 12 18H21M12 16H22V8H12V16M16 13.5C15.2 13.5 14.5 12.8 14.5 12C14.5 11.2 15.2 10.5 16 10.5C16.8 10.5 17.5 11.2 17.5 12C17.5 12.8 16.8 13.5 16 13.5Z"/></svg>
+        <span>Connect Wallet</span>
+      </button>
+    </header>
+
+    <main class="main-content">
+      <div class="container">
+        <h1>
+          <svg class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="M17,18C15.89,18 15,18.89 15,20A2,2 0 0,0 17,22A2,2 0 0,0 19,20C19,18.89 18.1,18 17,18M1,2V4H3L6.6,11.59L5.24,14.04C5.09,14.32 5,14.65 5,15A2,2 0 0,0 7,17H19V15H7.42A0.25,0.25 0 0,1 7.17,14.75L8.1,13H15.55C16.3,13 16.96,12.58 17.3,11.97L20.88,5.5C20.95,5.34 21,5.17 21,5A1,1 0 0,0 20,4H5.21L4.27,2H1Z" /></svg>
+          Secure Escrow Payment
+        </h1>
+        
+        <div id="products"></div>
+        
+        <section>
+          <h2>
+            <svg class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="m15.5 14l5 5l-1.5 1.5l-5-5v-.79l-.27-.28A6.5 6.5 0 0 1 9.5 16A6.5 6.5 0 0 1 3 9.5A6.5 6.5 0 0 1 9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.57 4.23l.28.27h.79M9.5 14C12 14 14 12 14 9.5C14 7 12 5 9.5 5C7 5 5 7 5 9.5C5 12 7 14 9.5 14Z" /></svg>
+            Check Escrow Status
+          </h2>
+          <div class="escrow-checker">
+            <input
+              type="number"
+              id="escrowIdInput"
+              placeholder="Enter Escrow ID"
+            />
+            <button onclick="checkEscrow()">Check Status</button>
+          </div>
+          <div id="escrowStatus"></div>
+        </section>
+      </div>
+    </main>
+
+    <!-- NEW: Custom Alert Modal -->
+    <div id="customAlert">
+        <div class="alert-content">
+            <div id="alertIcon" class="alert-icon"></div>
+            <h3 id="alertTitle" class="alert-title"></h3>
+            <p id="alertMessage" class="alert-message"></p>
+            <button id="alertCloseBtn" class="alert-close-btn">OK</button>
+        </div>
+    </div>
+
+    <script>
+      // --- NEW: Custom Alert Logic ---
+      const alertModal = document.getElementById('customAlert');
+      const alertIcon = document.getElementById('alertIcon');
+      const alertTitle = document.getElementById('alertTitle');
+      const alertMessage = document.getElementById('alertMessage');
+      const alertCloseBtn = document.getElementById('alertCloseBtn');
+
+      const successIcon = '<span>&#10003;</span>';
+      const errorIcon = '<span>&#10005;</span>';
+      
+      const hideCustomAlert = () => {
+        alertModal.classList.remove('show');
+      };
+
+      const showCustomAlert = (title, message, type = 'info') => {
+        alertTitle.textContent = title;
+        alertMessage.innerHTML = message; 
+        
+        if (type === 'success') {
+          alertIcon.innerHTML = successIcon;
+          alertIcon.className = 'alert-icon success';
+        } else if (type === 'error') {
+          alertIcon.innerHTML = errorIcon;
+          alertIcon.className = 'alert-icon error';
+        } else {
+          alertIcon.innerHTML = '';
+          alertIcon.className = 'alert-icon';
+        }
+
+        alertModal.classList.add('show');
+      };
+
+      alertCloseBtn.addEventListener('click', hideCustomAlert);
+      alertModal.addEventListener('click', (e) => {
+        if (e.target === alertModal) {
+            hideCustomAlert();
+        }
+      });
+
+      // --- NEW: MetaMask Connection Logic ---
+      const connectWalletBtn = document.getElementById('connectWalletBtn');
+
+      const updateWalletStatus = (accounts) => {
+        if (accounts.length > 0) {
+          const address = accounts[0];
+          const shortAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
+          connectWalletBtn.innerHTML = `
+            <svg class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="M21 18V19C21 20.1 20.1 21 19 21H5C3.9 21 3 20.1 3 19V5C3 3.9 3.9 3 5 3H19C20.1 3 21 3.9 21 5V6H12C10.9 6 10 6.9 10 8V16C10 17.1 10.9 18 12 18H21M12 16H22V8H12V16M16 13.5C15.2 13.5 14.5 12.8 14.5 12C14.5 11.2 15.2 10.5 16 10.5C16.8 10.5 17.5 11.2 17.5 12C17.5 12.8 16.8 13.5 16 13.5Z"/></svg>
+            <span>${shortAddress}</span>
+          `;
+        } else {
+          connectWalletBtn.innerHTML = `
+            <svg class="icon" viewBox="0 0 24 24"><path fill="currentColor" d="M21 18V19C21 20.1 20.1 21 19 21H5C3.9 21 3 20.1 3 19V5C3 3.9 3.9 3 5 3H19C20.1 3 21 3.9 21 5V6H12C10.9 6 10 6.9 10 8V16C10 17.1 10.9 18 12 18H21M12 16H22V8H12V16M16 13.5C15.2 13.5 14.5 12.8 14.5 12C14.5 11.2 15.2 10.5 16 10.5C16.8 10.5 17.5 11.2 17.5 12C17.5 12.8 16.8 13.5 16 13.5Z"/></svg>
+            <span>Connect Wallet</span>
+          `;
+        }
+      };
+
+      const connectWallet = async () => {
+        if (window.ethereum) {
+          try {
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            updateWalletStatus(accounts);
+          } catch (error) {
+            console.error("User rejected request", error);
+            showCustomAlert("Connection Failed", "You rejected the wallet connection request.", "error");
+          }
+        } else {
+          showCustomAlert("MetaMask Not Found", "Please install the MetaMask browser extension to continue.", "error");
+        }
+      };
+      
+      const checkInitialConnection = async () => {
+        if (window.ethereum) {
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          updateWalletStatus(accounts);
+          window.ethereum.on('accountsChanged', updateWalletStatus);
+        }
+      };
+
+      connectWalletBtn.addEventListener('click', connectWallet);
+      window.addEventListener('load', checkInitialConnection);
+
+      
+      // ---------- Products ----------
+      const products = [
+        { 
+          id: 1, 
+          name: "Standard Product", 
+          price: 1000, 
+          icon: '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27M6.24 5h11.52l.83 1H5.41zM5 19V8h14v11z"/></svg>'
+        },
+        { 
+          id: 2, 
+          name: "Premium Product", 
+          price: 2000,
+          icon: '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="m20.2 6l-1.8-3.1c-.6-.9-1.6-1.5-2.7-1.5H8.2c-1.1 0-2.1.6-2.7 1.5L3.8 6c-.6.9-.8 2-.6 3.1l1 3.4c.3.9.9 1.6 1.7 2.1L12 18l5.1-3.4c.8-.5 1.4-1.2 1.7-2.1l1-3.4c.2-1.1 0-2.2-.6-3.1M12 15.6L7.5 12.6l-.8-2.7L8.2 7h7.5l1.6 2.9l-.8 2.7zM8 20h8v2H8z"/></svg>'
+        },
+      ];
+
+      // ---------- Web3 Setup ----------
+      const sepoliaUrl =
+        "https://sepolia.infura.io/v3/9d859841af474be5b052f56677ca8c51";
+      const web3 = new Web3(Web3.givenProvider || sepoliaUrl);
+      const contractAddress = "0x2aEEAE7Bc5aDb224684D5621268895cf6176e938";
+      const abi = [
+        {
+          inputs: [],
+          stateMutability: "nonpayable",
+          type: "constructor",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "owner",
+              type: "address",
+            },
+          ],
+          name: "OwnableInvalidOwner",
+          type: "error",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "account",
+              type: "address",
+            },
+          ],
+          name: "OwnableUnauthorizedAccount",
+          type: "error",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "escrowId",
+              type: "uint256",
+            },
+            {
+              indexed: false,
+              internalType: "address",
+              name: "buyer",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "address",
+              name: "seller",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "amountETH",
+              type: "uint256",
+            },
+          ],
+          name: "EscrowCreated",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "escrowId",
+              type: "uint256",
+            },
+            {
+              indexed: false,
+              internalType: "address",
+              name: "buyer",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "amountETH",
+              type: "uint256",
+            },
+          ],
+          name: "EscrowRefunded",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "escrowId",
+              type: "uint256",
+            },
+            {
+              indexed: false,
+              internalType: "address",
+              name: "seller",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "amountETH",
+              type: "uint256",
+            },
+          ],
+          name: "EscrowReleased",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "address",
+              name: "previousOwner",
+              type: "address",
+            },
+            {
+              indexed: true,
+              internalType: "address",
+              name: "newOwner",
+              type: "address",
+            },
+          ],
+          name: "OwnershipTransferred",
+          type: "event",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "escrowId",
+              type: "uint256",
+            },
+          ],
+          name: "confirmDelivery",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "seller",
+              type: "address",
+            },
+          ],
+          name: "createEscrow",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "payable",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "escrowCount",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          name: "escrows",
+          outputs: [
+            {
+              internalType: "address",
+              name: "buyer",
+              type: "address",
+            },
+            {
+              internalType: "address",
+              name: "seller",
+              type: "address",
+            },
+            {
+              internalType: "uint256",
+              name: "amountETH",
+              type: "uint256",
+            },
+            {
+              internalType: "enum SmartUPIEscrow.Status",
+              name: "status",
+              type: "uint8",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "escrowId",
+              type: "uint256",
+            },
+          ],
+          name: "getEscrow",
+          outputs: [
+            {
+              components: [
+                {
+                  internalType: "address",
+                  name: "buyer",
+                  type: "address",
+                },
+                {
+                  internalType: "address",
+                  name: "seller",
+                  type: "address",
+                },
+                {
+                  internalType: "uint256",
+                  name: "amountETH",
+                  type: "uint256",
+                },
+                {
+                  internalType: "enum SmartUPIEscrow.Status",
+                  name: "status",
+                  type: "uint8",
+                },
+              ],
+              internalType: "struct SmartUPIEscrow.Escrow",
+              name: "",
+              type: "tuple",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "owner",
+          outputs: [
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "escrowId",
+              type: "uint256",
+            },
+          ],
+          name: "refund",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "renounceOwnership",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "newOwner",
+              type: "address",
+            },
+          ],
+          name: "transferOwnership",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+      ];
+      
+      const escrowContract = new web3.eth.Contract(abi, contractAddress);
+
+      // ---------- Render Products ----------
+      function loadProducts() {
+        const div = document.getElementById("products");
+        div.innerHTML = "";
+        products.forEach((p) => {
+          div.innerHTML += `
+            <div class="product-card">
+              <div class="product-icon">${p.icon}</div>
+              <h3>${p.name}</h3>
+              <p>Price: Rs ${p.price}</p>
+              <button onclick="buyProduct(${p.id})">Buy</button>
+            </div>`;
+        });
+      }
+
+      // ---------- Buy Product ----------
+      async function buyProduct(id) {
+        const product = products.find((p) => p.id === id);
+        if (!product) return;
+
+        const sepoliaChainId = 11155111;
+        if (window.ethereum) {
+          try {
+            const chainId = await window.ethereum.request({
+              method: "eth_chainId",
+            });
+            if (parseInt(chainId, 16) !== sepoliaChainId) {
+              try {
+                await window.ethereum.request({
+                  method: "wallet_switchEthereumChain",
+                  params: [{ chainId: web3.utils.toHex(sepoliaChainId) }],
+                });
+                console.log("Switched to Sepolia network.");
+              } catch (switchError) {
+                if (switchError.code === 4902) {
+                  try {
+                    await window.ethereum.request({
+                      method: "wallet_addEthereumChain",
+                      params: [{
+                        chainId: web3.utils.toHex(sepoliaChainId),
+                        chainName: "Sepolia",
+                        rpcUrls: [sepoliaUrl],
+                        nativeCurrency: {
+                          name: "Sepolia ETH",
+                          symbol: "SEP",
+                          decimals: 18,
+                        },
+                        blockExplorerUrls: [
+                          "https://sepolia.etherscan.io",
+                        ],
+                      }, ],
+                    });
+                    console.log("Sepolia network added to MetaMask.");
+                  } catch (addError) {
+                    console.error("Failed to add Sepolia network.", addError);
+                    showCustomAlert("Network Error", "Failed to add Sepolia network. Please add it manually in MetaMask.", "error");
+                    return;
+                  }
+                } else {
+                  console.error("Failed to switch network.", switchError);
+                  showCustomAlert("Network Error", "Please switch your MetaMask network to Sepolia to continue.", "error");
+                  return;
+                }
+              }
+            }
+          } catch (error) {
+            console.error("Could not get chain ID.", error);
+            showCustomAlert("Connection Error", "Could not connect to MetaMask. Please ensure it's installed and unlocked.", "error");
+            return;
+          }
+        } else {
+          showCustomAlert("MetaMask Not Found", "Please install the MetaMask browser extension to continue.", "error");
+          return;
+        }
+
+        const accounts = await web3.eth.requestAccounts();
+        const buyer = accounts[0];
+        const seller = "0x9c61880a81fE5959bAc9E3A0A12ec9928fFB8E41";
+
+        const res = await fetch("/create-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount: product.price,
+            buyer,
+            seller,
+          }),
+        });
+
+        const data = await res.json();
+        const order = data.order;
+
+        const options = {
+          key: "rzp_test_RK7QSEAGnpiL8n",
+          amount: order.amount,
+          currency: order.currency,
+          name: "Smart UPI Escrow",
+          description: product.name,
+          order_id: order.id,
+          handler: async function (response) {
+            try {
+              const rate = 0.0001;
+              const ethAmount = web3.utils.toWei(
+                ((product.price / 1000) * rate).toString(),
+                "ether"
+              );
+              const result = await escrowContract.methods
+                .createEscrow(seller)
+                .send({
+                  from: buyer,
+                  value: ethAmount
+                });
+
+              const escrowId = result.events.EscrowCreated.returnValues.escrowId;
+              showCustomAlert("Payment Successful!", `Escrow ID: ${escrowId}<br>${web3.utils.fromWei(ethAmount, "ether")} ETH has been secured in escrow.`, "success");
+            } catch (err) {
+              console.error("Escrow allocation failed", err);
+              showCustomAlert("On-Chain Error", "Your UPI payment succeeded, but the escrow transaction failed. Please contact support.", "error");
+            }
+          },
+          theme: { color: "#ff8c00" },
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.open();
+      }
+
+      // ---------- Check Escrow and Confirm Delivery ----------
+      async function checkEscrow() {
+        const escrowId = document.getElementById("escrowIdInput").value;
+        const statusDiv = document.getElementById("escrowStatus");
+
+        if (!escrowId) {
+          statusDiv.innerHTML = "Please enter an Escrow ID.";
+          return;
+        }
+
+        try {
+          const escrow = await escrowContract.methods
+            .getEscrow(escrowId)
+            .call();
+          const statusMap = {
+            "0": { text: "Pending", color: "var(--warning-color)" },
+            "1": { text: "Delivered", color: "var(--success-color)" },
+            "2": { text: "Refunded", color: "var(--danger-color)" },
+          };
+          const currentStatus = statusMap[escrow.status].text;
+          const statusColor = statusMap[escrow.status].color;
+          const amountInEth = web3.utils.fromWei(escrow.amountETH, "ether");
+
+          let buttonHtml = '';
+          if (currentStatus === "Pending") {
+            buttonHtml = `
+              <div class="actions">
+                  <button onclick="confirmDelivery(${escrowId})">Confirm Delivery</button>
+                  <button onclick="refund(${escrowId})" class="refund-btn">Request Refund</button>
+              </div>
+            `;
+          }
+          
+          statusDiv.innerHTML = `
+            <p><span class="label">Escrow ID:</span> <span class="value">${escrowId}</span></p>
+            <p><span class="label">Buyer:</span> <span class="value">${escrow.buyer}</span></p>
+            <p><span class="label">Seller:</span> <span class="value">${escrow.seller}</span></p>
+            <p><span class="label">Amount:</span> <span class="value">${amountInEth} ETH</span></p>
+            <p><span class="label">Status:</span> <span class="status-tag" style="background-color: ${statusColor};">${currentStatus}</span></p>
+            ${buttonHtml}
+          `;
+        } catch (err) {
+          console.error("Failed to fetch escrow status", err);
+          statusDiv.innerHTML = "Error fetching escrow details. Check the ID.";
+        }
+      }
+
+   async function confirmDelivery(escrowId) {
+        try {
+          const accounts = await web3.eth.requestAccounts();
+          const buyer = accounts[0];
+          await escrowContract.methods.confirmDelivery(escrowId).send({
+            from: buyer,
+          });
+
+          // Fetch escrow details after confirmation
+          const escrow = await escrowContract.methods
+            .getEscrow(escrowId)
+            .call();
+          const amountInEth = escrow.amountETH;
+
+          alert("Delivery confirmed! Escrow payment released to seller.");
+
+          checkEscrow(); // Refresh status
+        } catch (err) {
+          console.error("Confirmation failed", err);
+          alert("Failed to confirm delivery. Make sure you are the buyer.");
+        }
+      }
+
+      async function refund(escrowId) {
+        try {
+          const accounts = await web3.eth.requestAccounts();
+          const user = accounts[0];
+          await escrowContract.methods.refund(escrowId).send({
+            from: user,
+          });
+          alert("Refund requested! Funds returned to buyer.");
+          checkEscrow(); // Refresh status
+        } catch (err) {
+          console.error("Refund failed", err);
+          alert(
+            "Failed to request refund. Make sure you are the buyer or seller."
+          );
+        }
+      }
+
+      loadProducts();
+    </script>
+  </body>
+</html>
