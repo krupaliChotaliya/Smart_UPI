@@ -1,0 +1,9 @@
+node_modules
+.env
+*.py
+*.h5
+*.csv
+index.html
+script.js
+abi.js
+__pycache__
